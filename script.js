@@ -37,7 +37,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-/* ── Envoi du formulaire ─────────────────────────────────── */
+/* ── Envoi du formulaire via Formspree ───────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   const contactForm = document.getElementById('contact-form');
   if (!contactForm) return;
@@ -49,108 +49,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorBox = document.getElementById('form-error');
     const successBox = document.getElementById('form-success');
 
-    errorBox.style.display = 'none';
-    successBox.style.display = 'none';
+    errorBox.classList.add('hidden');
+    successBox.classList.add('hidden');
 
     const prenom = document.getElementById('prenom').value.trim();
     const nom    = document.getElementById('nom').value.trim();
     const email  = document.getElementById('email').value.trim();
-    const message = document.getElementById('message').value.trim();
+    const tel    = document.getElementById('telephone').value.trim();
 
-    if (!prenom || !nom || !email || !message) {
-      errorBox.innerText = 'Veuillez remplir tous les champs obligatoires (*).';
-      errorBox.style.display = 'block';
+    if (!prenom || !nom || !email || !tel) {
+      errorBox.querySelector('span').innerText = 'Veuillez remplir tous les champs obligatoires (*).';
+      errorBox.classList.remove('hidden');
       return;
     }
 
     btn.disabled = true;
-    const originalText = btn.innerHTML;
+    const originalHTML = btn.innerHTML;
     btn.innerHTML = '<span>Envoi en cours...</span>';
 
     try {
-      const response = await fetch('contact.php', {
+      const response = await fetch(form.action, {
         method: 'POST',
-        body: new FormData(form)
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
       });
 
-      if (!response.ok) throw new Error('Erreur serveur');
-      const data = await response.json();
-
-      if (data.status === 'success') {
+      if (response.ok) {
         form.reset();
-        successBox.style.display = 'block';
-        setTimeout(() => successBox.style.display = 'none', 6000);
+        successBox.classList.remove('hidden');
+        setTimeout(() => successBox.classList.add('hidden'), 6000);
       } else {
-        errorBox.innerText = data.message || 'Une erreur est survenue.';
-        errorBox.style.display = 'block';
+        const data = await response.json();
+        errorBox.querySelector('span').innerText = data.errors
+          ? data.errors.map(e => e.message).join(', ')
+          : 'Une erreur est survenue.';
+        errorBox.classList.remove('hidden');
       }
     } catch (err) {
-      errorBox.innerText = 'Impossible de joindre le serveur. Veuillez réessayer.';
-      errorBox.style.display = 'block';
+      errorBox.querySelector('span').innerText = 'Impossible de joindre le serveur. Veuillez réessayer.';
+      errorBox.classList.remove('hidden');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = originalText;
-    }
-  });
-});
-/* ── Pièces jointes ──────────────────────────────────────── */
-function updateFileLabel(input) {
-  const files    = Array.from(input.files);
-  const label    = document.getElementById('file-label');
-  const fileList = document.getElementById('file-list');
-  const badge    = document.getElementById('attachment-badge');
-
-  if (!files.length) {
-    label.textContent = 'Glissez vos fichiers ici ou utilisez le bouton ci-dessus';
-    fileList.classList.add('hidden');
-    fileList.innerHTML = '';
-    badge.classList.add('hidden');
-    return;
-  }
-
-  badge.textContent = files.length;
-  badge.classList.remove('hidden');
-
-  label.textContent = files.length === 1
-    ? files[0].name
-    : `${files.length} fichier(s) sélectionné(s)`;
-
-  fileList.innerHTML = '';
-  files.forEach(file => {
-    const sizeMo = (file.size / 1024 / 1024).toFixed(2);
-    const item = document.createElement('div');
-    item.className = 'flex items-center gap-2 text-xs text-slate-600 bg-slate-100 rounded-lg px-3 py-1.5';
-    item.innerHTML = `
-      <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-      </svg>
-      <span class="truncate">${file.name}</span>
-      <span class="ml-auto text-slate-400 flex-shrink-0">${sizeMo} Mo</span>`;
-    fileList.appendChild(item);
-  });
-  fileList.classList.remove('hidden');
-}
-
-// Drag & drop sur la zone pointillée
-document.addEventListener('DOMContentLoaded', () => {
-  const dropZone  = document.querySelector('.file-drop-zone');
-  const fileInput = document.getElementById('attachments');
-  if (!dropZone || !fileInput) return;
-
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('drag-over');
-  });
-  ['dragleave', 'dragend'].forEach(evt =>
-    dropZone.addEventListener(evt, () => dropZone.classList.remove('drag-over'))
-  );
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('drag-over');
-    if (e.dataTransfer.files.length) {
-      fileInput.files = e.dataTransfer.files;
-      updateFileLabel(fileInput);
+      btn.innerHTML = originalHTML;
     }
   });
 });
