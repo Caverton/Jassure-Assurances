@@ -37,6 +37,17 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
+/* ── Onglets Particuliers / Professionnels ───────────────── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+    const tabId = 'tab-' + btn.dataset.tab;
+    document.getElementById(tabId).classList.remove('hidden');
+  });
+});
+
 /* ── Envoi du formulaire via Formspree ───────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   const contactForm = document.getElementById('contact-form');
