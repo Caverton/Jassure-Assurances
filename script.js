@@ -40,69 +40,21 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 /* ── Onglets Particuliers / Professionnels ───────────────── */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const targetTab = btn.dataset.tab;
+
+    // Mettre à jour les boutons
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.classList.add('text-slate-500');
+    });
     btn.classList.add('active');
-    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
-    const tabId = 'tab-' + btn.dataset.tab;
-    document.getElementById(tabId).classList.remove('hidden');
-  });
-});
+    btn.classList.remove('text-slate-500');
 
-/* ── Envoi du formulaire via Formspree ───────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  const contactForm = document.getElementById('contact-form');
-  if (!contactForm) return;
-
-  contactForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const btn = form.querySelector('[type="submit"]');
-    const errorBox = document.getElementById('form-error');
-    const successBox = document.getElementById('form-success');
-
-    errorBox.classList.add('hidden');
-    successBox.classList.add('hidden');
-
-    const prenom = document.getElementById('prenom').value.trim();
-    const nom    = document.getElementById('nom').value.trim();
-    const email  = document.getElementById('email').value.trim();
-    const tel    = document.getElementById('telephone').value.trim();
-
-    if (!prenom || !nom || !email || !tel) {
-      errorBox.querySelector('span').innerText = 'Veuillez remplir tous les champs obligatoires (*).';
-      errorBox.classList.remove('hidden');
-      return;
-    }
-
-    btn.disabled = true;
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = '<span>Envoi en cours...</span>';
-
-    try {
-      const response = await fetch(form.action, {
-        method: 'POST',
-        body: new FormData(form),
-        headers: { 'Accept': 'application/json' }
-      });
-
-      if (response.ok) {
-        form.reset();
-        successBox.classList.remove('hidden');
-        setTimeout(() => successBox.classList.add('hidden'), 6000);
-      } else {
-        const data = await response.json();
-        errorBox.querySelector('span').innerText = data.errors
-          ? data.errors.map(e => e.message).join(', ')
-          : 'Une erreur est survenue.';
-        errorBox.classList.remove('hidden');
-      }
-    } catch (err) {
-      errorBox.querySelector('span').innerText = 'Impossible de joindre le serveur. Veuillez réessayer.';
-      errorBox.classList.remove('hidden');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalHTML;
-    }
+    // Afficher / masquer les panneaux
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+      panel.classList.add('hidden');
+    });
+    document.getElementById('tab-' + targetTab).classList.remove('hidden');
   });
 });
 
